@@ -101,11 +101,6 @@ ProgramNode = _.extend({}, AstNode, {
 });  
 classManifest["Program"] = ProgramNode;
 
-/*
- * A trait for common expression features. 
- * The most notable feature is that when replacing Expression nodes, the replacement code
- * should be parsed searching for a single expression, rather than a statemnet
- ***/
 ExpressionTrait = _.extend({}, {
     parseAndExtractCorrespondingNode: function(code) {
         var node = wrapNode(esprima.parse(code));
@@ -119,9 +114,6 @@ ExpressionTrait = _.extend({}, {
     }    
 });
 
-/*
- * A trait for common statement features. 
- ***/
 StatementTrait = _.extend({}, {
     parseAndExtractCorrespondingNode: function(code) {
         var node = wrapNode(esprima.parse(code));

@@ -1,5 +1,5 @@
 
-var wrapNode = require('../../lib/ast-node'),
+var wrapNode = require('../src/index.js'),
     esprima = require("esprima"),
     escodegen = require("escodegen"), 
     _ = require('underscore');

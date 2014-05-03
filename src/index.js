@@ -2,19 +2,66 @@ var _ = require('underscore'),
     esprima = require('esprima'),
     escodegen = require("escodegen");
 
-//A map that groups together types of AST nodes.
+/*
+ * A map that groups together types of AST nodes.
+ * This map doesn't have to be complete, but only nodes listed here will support replace/prefix/suffix 
+ * operations properly.
+ *
+ * See the SpiderMonkeyAPI for the full list:
+ * https://developer.mozilla.org/en-US/docs/Mozilla/Projects/SpiderMonkey/Parser_API
+ **/
 var syntaxMap = {
-    //Nodes that contain blocks, like programs or functions.
+    //Nodes that contain arrays of statements. 
     BlockContainer: [
-        "Program"
+        "Program",
+        "BlockStatement"
     ],
     Statement: [
+        "EmptyStatement",
         "ExpressionStatement",
+        "IfStatement",
+        "LabeledStatement",
+        "BreakStatement",
+        "ContinueStatement",
+        "WithStatement",
+        "SwitchStatement",
+        "ReturnStatement",
+        "ThrowStatement",
+        "TryStatement",
+        "WhileStatement",
+        "DoWhileStatement",
+        "ForStatement",
+        "ForInStatement",
+        "ForOfStatement",
+        "LetStatement",
+        "DebuggerStatement",
+        "FunctionDeclaration",
+        "VariableDeclaration",
+        "VariableDeclarator",
     ],
     Expression: [
+        "ThisExpression",
+        "ArrayExpression",
+        "ObjectExpression",
+        "FunctionExpression",
+        "ArrowExpression",
+        "SequenceExpression",
+        "UnaryExpression",
         "BinaryExpression",
-        "Literal",
+        "AssignmentExpression",
+        "UpdateExpression",
+        "LogicalExpression",
+        "ConditionalExpression",
+        "NewExpression",
         "CallExpression",
+        "MemberExpression",
+        "ComprehensionExpression",
+        "GeneratorExpression",
+        "GraphExpression",
+        "YieldExpression",
+        "GraphIndexExpression",
+        "LetExpression",
+        "Literal",
         "Identifier"
     ]
 };
@@ -186,7 +233,7 @@ var nodeTypePrototypes = _.chain(syntaxMap)
                         {},
                         AstNode, 
                         x, 
-                        //Later in traits
+                        //Layer in traits
                         (_.has(traits, trait)) ? traits[trait] : {}
                     )
                 ];

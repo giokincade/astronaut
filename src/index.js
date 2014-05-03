@@ -153,7 +153,7 @@ var AstNode = _.chain(types)
 /**** Traits for functionality that is common across node types **/ 
 ExpressionTrait = _.extend({}, {
     parseAndExtractCorrespondingNode: function(code) {
-        var node = astblaster(esprima.parse(code));
+        var node = astronaut(esprima.parse(code));
         if (node.body().length > 1) {
             throw "Expected a single statement and got multiple";
         } else if (node.body().length == 0) {
@@ -166,7 +166,7 @@ ExpressionTrait = _.extend({}, {
 
 StatementTrait = _.extend({}, {
     parseAndExtractCorrespondingNode: function(code) {
-        var node = astblaster(esprima.parse(code));
+        var node = astronaut(esprima.parse(code));
         if (node.body().length > 1) {
             throw "Expected a single statement and got multiple";
         } else if (node.body().length == 0) {
@@ -254,7 +254,7 @@ var generateCode = function(code) {
     });
 };
 
-//Now add NodeType-specific functionality. Typically these are shortcuts. 
+//Now add nodetype-specific functionality. Typically these are shortcuts. 
 nodeTypePrototypes.Program = _.extend(nodeTypePrototypes.Program, {
     body: function() {
         return this.data.body
@@ -330,12 +330,12 @@ nodeTypePrototypes.Identifier = _.extend(nodeTypePrototypes.Identifier, {
  * Should be set to false if this node isn't part of an array.
  *
  ***/
-var astblaster = function(node, parent, parentKey, arrayIndex) {
+var astronaut = function(node, parent, parentKey, arrayIndex) {
     var arrayIndex = _.isNumber(arrayIndex) ? arrayIndex : false; 
 
     if (_.isArray(node)) {
         return _.map(node, function(x, index) {
-            return astblaster(x, parent, parentKey, index);
+            return astronaut(x, parent, parentKey, index);
         }); 
     } else if (!_.isObject(node)) {
         return node;
@@ -366,7 +366,7 @@ var astblaster = function(node, parent, parentKey, arrayIndex) {
     wrappedNode.data = function(){
         var data = {};
         _.each(_.keys(node), function(key){
-            data[key] = astblaster(node[key], wrappedNode, key);
+            data[key] = astronaut(node[key], wrappedNode, key);
         });
         return data;
     }();
@@ -374,4 +374,4 @@ var astblaster = function(node, parent, parentKey, arrayIndex) {
     return wrappedNode;
 };
 
-module.exports = astblaster;
+module.exports = astronaut;

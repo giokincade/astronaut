@@ -6,19 +6,18 @@ var astronaut = require('../src/index.js'),
 
 var onePlusOne = esprima.parse("1 + 1"); 
 
-var generate = function(code) {
-    return escodegen.generate(code, {
-        format: {
-            semicolons: false
-        }
-    });
-};
-
 module.exports = {
     testDeparse: function(test) {
         test.equals(
             "1",
             astronaut(esprima.parse("1")).deparse()
+        );
+        test.done();
+    },
+    testPassingCode: function(test) {
+        test.equals(
+            "1 + 1",
+            astronaut("1 + 1").deparse()
         );
         test.done();
     },

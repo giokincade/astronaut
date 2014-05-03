@@ -1,5 +1,5 @@
 
-var wrapNode = require('../src/index.js'),
+var astblaster = require('../src/index.js'),
     esprima = require("esprima"),
     escodegen = require("escodegen"), 
     _ = require('underscore');
@@ -18,14 +18,14 @@ module.exports = {
     testDeparse: function(test) {
         test.equals(
             "1",
-            wrapNode(esprima.parse("1")).deparse()
+            astblaster(esprima.parse("1")).deparse()
         );
         test.done();
     },
     testWalk: function(test) {
         var calls = 0;
         
-        wrapNode(onePlusOne).walk(function(node) {
+        astblaster(onePlusOne).walk(function(node) {
             calls++;
         });
         test.equals(5,calls);
@@ -34,7 +34,7 @@ module.exports = {
     testUpdatingLiteralValues: function(test) {
         test.equals(
             "2 + 2",
-            wrapNode(onePlusOne).walk(function(node) {
+            astblaster(onePlusOne).walk(function(node) {
                 if (node.isLiteral()
                         && node.value() === 1) {
                     node.value(2);
@@ -47,7 +47,7 @@ module.exports = {
     testReplace: function(test) {
         test.equals(
             "2 + 2",
-            wrapNode(onePlusOne).walk(function(node) {
+            astblaster(onePlusOne).walk(function(node) {
                 if (node.isLiteral()
                         && node.value() === 1) {
                     node.replace("2");
@@ -60,7 +60,7 @@ module.exports = {
     testReplaceStatement: function(test) {
         test.equals(
             "2 + 2",
-            wrapNode(onePlusOne).walk(function(node) {
+            astblaster(onePlusOne).walk(function(node) {
                 if (node.isExpressionStatement()) {
                     node.replace("2 + 2");
                 }
@@ -72,7 +72,7 @@ module.exports = {
     testReplacePrepend: function(test) {
         test.equals(
             "2 + 2;\n1 + 1",
-            wrapNode(onePlusOne).walk(function(node) {
+            astblaster(onePlusOne).walk(function(node) {
                 if (node.isExpressionStatement()) {
                     node.prefix("2 + 2");
                 }
@@ -84,7 +84,7 @@ module.exports = {
     testAppend: function(test) {
         test.equals(
             "1 + 1;\n2 + 2",
-            wrapNode(onePlusOne).walk(function(node) {
+            astblaster(onePlusOne).walk(function(node) {
                 if (node.isExpressionStatement()) {
                     node.affix("2 + 2");
                 }

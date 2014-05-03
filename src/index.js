@@ -2,112 +2,115 @@ var _ = require('underscore'),
     esprima = require('esprima'),
     escodegen = require("escodegen");
 
-//An array of the AST types that are currently supported
-var supportedTypes = [
-    "Program",
-    "ExpressionStatement",
-    "BinaryExpression",
-    "Literal",
-    "CallExpression",
-    "Identifier"
-];
-
-//A dictionary from AST types to their node types.
-var classManifest = {};
-
-var generateCode = function(code) {
-    return escodegen.generate(code, {
-        format: {
-            semicolons: false
-        }
-    });
+//A map that groups together types of AST nodes.
+var syntaxMap = {
+    //Nodes that contain blocks, like programs or functions.
+    BlockContainer: [
+        "Program"
+    ],
+    Statement: [
+        "ExpressionStatement",
+    ],
+    Expression: [
+        "BinaryExpression",
+        "Literal",
+        "CallExpression",
+        "Identifier"
+    ]
 };
 
-//A Generic AST node.
-AstNode = {
-    /**
-     * @return Object
-     * The SpiderMonkey AST for this ASTNode
-     **/
-    unwrap: function() {
-        return (function _unwrap(node) {
-            if (_.isArray(node)) {
-                return _.map(node, _unwrap);
-            } else if (!_.isObject(node)) {
-                return node;
+//A list of all the types, like [Identifier, CallExpression,...]
+var types = _.chain(syntaxMap)
+    .map(function(nodeTypes, key) {
+        return  nodeTypes;
+    })
+    .flatten()
+    .value();
+
+//A base AST node prototype
+var AstNode = _.chain(types)
+    //First we create is<NodeType> methods for all types, like isLiteral, isFunctionCall, etc. 
+    //These return false by default. 
+    .map(function(type) {
+        var x = {};
+        x["is" + type] = function() {
+            return false;
+        };
+        return x;
+    })
+    .reduce(function(acc, node) {
+        return _.extend(acc, node)
+    }, {})
+    //Now we attach the core API methods.
+    .extend({
+        /**
+         * @return Object
+         * The SpiderMonkey AST for this ASTNode
+         **/
+        unwrap: function() {
+            return (function _unwrap(node) {
+                if (_.isArray(node)) {
+                    return _.map(node, _unwrap);
+                } else if (!_.isObject(node)) {
+                    return node;
+                } else {
+                    var newdata = {};
+                    _.each(_.keys(node.data), function(key) {
+                        newdata[key] = _unwrap(node.data[key]);
+                    })
+                    return newdata;
+                }
+            })(this);
+        },
+        /**
+         * Walk the tree starting at this node, calling the callback along the way.
+         ***/
+        walk: function(callback) {
+            (function _walk(node, callback) {
+                if (_.isArray(node)) {
+                    _.each(node, function(n) {
+                        _walk(n, callback);
+                    });
+                } else if (_.isObject(node)) {
+                    callback(node);
+                    _.each(_.values(node.data), function(datum) {
+                        _walk(datum, callback);
+                    });
+                }
+            })(this, callback);
+            return this;
+        },
+        /**
+         * Turn the AST back into codez
+         ***/
+        deparse: function() {
+            return generateCode(this.unwrap());
+        },
+        /**
+         * Replace this node.
+         *
+         * @param String code
+         * A string to be parsed and used as the replacement for this node. 
+         ***/
+        replace: function(code) {
+            var newNode = this.parseAndExtractCorrespondingNode(code); 
+            if (this.parentArrayIndex === false) {
+                this.parent.data[this.parentKey] = newNode;
             } else {
-                var newdata = {};
-                _.each(_.keys(node.data), function(key) {
-                    newdata[key] = _unwrap(node.data[key]);
-                })
-                return newdata;
+                this.parent.data[this.parentKey][this.parentArrayIndex] = newNode;
             }
-        })(this);
-    },
-    /**
-     * Walk the tree starting at this node, calling the callback along the way.
-     ***/
-    walk: function(callback) {
-        (function _walk(node, callback) {
-            if (_.isArray(node)) {
-                _.each(node, function(n) {
-                    _walk(n, callback);
-                });
-            } else if (_.isObject(node)) {
-                callback(node);
-                _.each(_.values(node.data), function(datum) {
-                    _walk(datum, callback);
-                });
-            }
-        })(this, callback);
-        return this;
-    },
-    /**
-     * Turn the AST back into codez
-     ***/
-    deparse: function() {
-        return generateCode(this.unwrap());
-    },
-    /**
-     * Replace this node.
-     *
-     * @param String code
-     * A string to be parsed and used as the replacement for this node. 
-     ***/
-    replace: function(code) {
-        var newNode = this.parseAndExtractCorrespondingNode(code); 
-        if (this.parentArrayIndex === false) {
-            this.parent.data[this.parentKey] = newNode;
-        } else {
-            this.parent.data[this.parentKey][this.parentArrayIndex] = newNode;
-        }
-    },
-};
+        },
+    })
+    .value();
 
-//Set isType functions like "isLiteral", "isExpressionStatement", etc 
-_.each(supportedTypes, function(type) {
-    AstNode["is" + type] = function() {
-        return false;
-    };
-});
-
-ProgramNode = _.extend({}, AstNode, {
-    isProgram: function() {
-        return true;
-    },
-    body: function() {
-        return this.data.body
-    }
-});  
-classManifest["Program"] = ProgramNode;
-
+/**** Traits for functionality that is common across node types **/ 
 ExpressionTrait = _.extend({}, {
     parseAndExtractCorrespondingNode: function(code) {
-        var node = wrapNode(esprima.parse(code));
+        var node = astblaster(esprima.parse(code));
         if (node.body().length > 1) {
-            throw new Exception("Expected a single statement and got multiple");
+            throw "Expected a single statement and got multiple";
         } else if (node.body().length == 0) {
-            throw new Exception("Expected a single statement and found nothing.");
+            throw "Expected a single statement and found nothing.";
         } else {
             return node.body()[0].expression(); 
         }
@@ -116,11 +119,11 @@ ExpressionTrait = _.extend({}, {
 
 StatementTrait = _.extend({}, {
     parseAndExtractCorrespondingNode: function(code) {
-        var node = wrapNode(esprima.parse(code));
+        var node = astblaster(esprima.parse(code));
         if (node.body().length > 1) {
-            throw new Exception("Expected a single statement and got multiple");
+            throw "Expected a single statement and got multiple";
         } else if (node.body().length == 0) {
-            throw new Exception("Expected a single statement and found nothing.");
+            throw "Expected a single statement and found nothing.";
         } else {
             return node.body()[0];
         }
@@ -136,7 +139,7 @@ StatementTrait = _.extend({}, {
      ***/
     affix: function(code, prefix) {
         if (this.parentArrayIndex === false) {
-            throw new Exception("Cannot prepend an AST node that isn't part of a block");
+            throw "Cannot prepend an AST node that isn't part of a block";
         }
         var newNode = this.parseAndExtractCorrespondingNode(code),
             index = (prefix) ? this.parentArrayIndex : this.parentArrayIndex + 1;
@@ -160,13 +163,59 @@ StatementTrait = _.extend({}, {
      suffix: function(code) {
          this.affix(code, false);
      }
-})
+});
+
+var traits = {
+    "Statement": StatementTrait,
+    "Expression": ExpressionTrait
+};
+
+//A map from node types to their prototypes.
+var nodeTypePrototypes = _.chain(syntaxMap)
+    .map(function(nodeTypes, trait) {
+        return _.chain(nodeTypes)
+            .map(function(nodeType) {
+                var x = {};
+                x["is" + nodeType] =  function() {
+                    return true;
+                };
+
+                return [ 
+                    nodeType, 
+                    _.extend(
+                        {},
+                        AstNode, 
+                        x, 
+                        //Later in traits
+                        (_.has(traits, trait)) ? traits[trait] : {}
+                    )
+                ];
+            })
+            .object()
+            .value();
+    })
+    .reduce(function(acc, nodes) {
+        return _.extend(acc, nodes);
+    }, {})
+    .value();
+
+var generateCode = function(code) {
+    return escodegen.generate(code, {
+        format: {
+            semicolons: false
+        }
+    });
+};
+
+//Now add NodeType-specific functionality. Typically these are shortcuts. 
+nodeTypePrototypes.Program = _.extend(nodeTypePrototypes.Program, {
+    body: function() {
+        return this.data.body
+    }
+});  
 
 
-LiteralNode = _.extend({}, AstNode, ExpressionTrait, {
-    isLiteral: function() {
-        return true;
-    },
+nodeTypePrototypes.Literal = _.extend(nodeTypePrototypes.Literal, {
     /**
      * Gets and optionally sets the value of the node.
      * @param newValue 
@@ -179,29 +228,18 @@ LiteralNode = _.extend({}, AstNode, ExpressionTrait, {
         return this.data.value  
     }
 });  
-classManifest["Literal"] = LiteralNode;
 
-ExpressionStatementNode = _.extend({}, AstNode, StatementTrait, {
-    isExpressionStatement: function() {
-        return true;
-    },
+
+nodeTypePrototypes.ExpressionStatement = _.extend(nodeTypePrototypes.ExpressionStatement, {
     expression: function() {
         return this.data.expression;
     }
 });  
-classManifest["ExpressionStatement"] = ExpressionStatementNode;
 
-BinaryExpressionNode = _.extend({}, AstNode, ExpressionTrait, {
-    isBinaryExpression: function() {
-        return true;
-    }
+nodeTypePrototypes.BinaryExpression = _.extend(nodeTypePrototypes.BinaryExpression, {
 });  
-classManifest["BinaryExpression"] = BinaryExpressionNode;
 
-CallExpressionNode = _.extend({}, AstNode, ExpressionTrait, {
-    isCallExpression: function() {
-        return true;
-    },
+nodeTypePrototypes.CallExpression = _.extend(nodeTypePrototypes.CallExpression, {
     calleeName: function() {
         if (this.data.callee
              && this.data.callee.isIdentifier()) {
@@ -213,9 +251,8 @@ CallExpressionNode = _.extend({}, AstNode, ExpressionTrait, {
         return this.data.arguments;
     },
 });  
-classManifest["CallExpression"] = CallExpressionNode; 
 
-IdentifierNode = _.extend({}, AstNode, ExpressionTrait, {
+nodeTypePrototypes.Identifier = _.extend(nodeTypePrototypes.Identifier, {
     isIdentifier: function() {
         return true;
     },
@@ -226,7 +263,6 @@ IdentifierNode = _.extend({}, AstNode, ExpressionTrait, {
         return this.raw_node.name;
     }
 });  
-classManifest["Identifier"] = IdentifierNode;
 
 
 /**
@@ -247,23 +283,23 @@ classManifest["Identifier"] = IdentifierNode;
  * Should be set to false if this node isn't part of an array.
  *
  ***/
-var wrapNode = function(node, parent, parentKey, arrayIndex) {
+var astblaster = function(node, parent, parentKey, arrayIndex) {
     var arrayIndex = _.isNumber(arrayIndex) ? arrayIndex : false; 
 
     if (_.isArray(node)) {
         return _.map(node, function(x, index) {
-            return wrapNode(x, parent, parentKey, index);
+            return astblaster(x, parent, parentKey, index);
         }); 
     } else if (!_.isObject(node)) {
         return node;
     }
 
-    var astClass = _.has(classManifest, node.type) ?
-        classManifest[node.type] :
+    var astPrototype = _.has(nodeTypePrototypes, node.type) ?
+        nodeTypePrototypes[node.type] :
         AstNode;
 
     var wrappedNode = Object.create(
-        astClass, 
+        astPrototype, 
         {
             parent: {
                 value: parent,
@@ -283,7 +319,7 @@ var wrapNode = function(node, parent, parentKey, arrayIndex) {
     wrappedNode.data = function(){
         var data = {};
         _.each(_.keys(node), function(key){
-            data[key] = wrapNode(node[key], wrappedNode, key);
+            data[key] = astblaster(node[key], wrappedNode, key);
         });
         return data;
     }();
@@ -291,4 +327,4 @@ var wrapNode = function(node, parent, parentKey, arrayIndex) {
     return wrappedNode;
 };
 
-module.exports = wrapNode;
+module.exports = astblaster;

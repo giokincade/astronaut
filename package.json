@@ -1,5 +1,5 @@
 {
-  "name": "astblaster",
+  "name": "astronaut",
   "version": "0.0.0",
   "description": "A library for transforming Esprima/SpiderMonkey ASTs.",
   "main": "index.js",
@@ -11,6 +11,8 @@
   },
   "keywords": [
     "ast",
+    "abstract syntax tree",
+    "astronaut",
     "esprima",
     "spidermonkey"
   ],

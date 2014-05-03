@@ -313,65 +313,57 @@ nodeTypePrototypes.Identifier = _.extend(nodeTypePrototypes.Identifier, {
 
 
 /**
- * Recursively wraps the raw node produced by esprima in a more useful object.  
- * If the input is some leaf attribute, like "value", or "type", this will return that value. 
+ * Wraps the input AST in an Astronaut AstNode.
  *
- * @param node
- * The SpiderMonkey AST node. 
- *
- * @parem node
- * A pointer to the parent of this node. Should be unspecified for the root.
- *
- * @parem node
- * They key in the parent's data that defines this node. 
- *
- * @param bool arrayIndex 
- * If this node is a part of an array in it's parent, what index is it?
- * Should be set to false if this node isn't part of an array.
+ * @param codeOrNode 
+ * A string containing code to be parsed, or the already-parsed SpiderMonkey AST;
  *
  ***/
-var astronaut = function(node, parent, parentKey, arrayIndex) {
-    var arrayIndex = _.isNumber(arrayIndex) ? arrayIndex : false; 
+var astronaut = function(codeOrNode) {
+    var node = _.isObject(codeOrNode) ? codeOrNode : esprima.parse(codeOrNode);
+    return (function wrap(node, parent, parentKey, arrayIndex) {
+        var arrayIndex = _.isNumber(arrayIndex) ? arrayIndex : false; 
 
-    if (_.isArray(node)) {
-        return _.map(node, function(x, index) {
-            return astronaut(x, parent, parentKey, index);
-        }); 
-    } else if (!_.isObject(node)) {
-        return node;
-    }
+        if (_.isArray(node)) {
+            return _.map(node, function(x, index) {
+                return wrap(x, parent, parentKey, index);
+            }); 
+        } else if (!_.isObject(node)) {
+            return node;
+        }
 
-    var astPrototype = _.has(nodeTypePrototypes, node.type) ?
-        nodeTypePrototypes[node.type] :
-        AstNode;
+        var astPrototype = _.has(nodeTypePrototypes, node.type) ?
+            nodeTypePrototypes[node.type] :
+            AstNode;
 
-    var wrappedNode = Object.create(
-        astPrototype, 
-        {
-            parent: {
-                value: parent,
-            }, 
-            parentKey: {
-                value: parentKey,
-            }, 
-            parentArrayIndex: {
-                value: arrayIndex
-            },
-            cache: {
-                value: {}
-            }
-        } 
-    );
+        var wrappedNode = Object.create(
+            astPrototype, 
+            {
+                parent: {
+                    value: parent,
+                }, 
+                parentKey: {
+                    value: parentKey,
+                }, 
+                parentArrayIndex: {
+                    value: arrayIndex
+                },
+                cache: {
+                    value: {}
+                }
+            } 
+        );
 
-    wrappedNode.data = function(){
-        var data = {};
-        _.each(_.keys(node), function(key){
-            data[key] = astronaut(node[key], wrappedNode, key);
-        });
-        return data;
-    }();
+        wrappedNode.data = function(){
+            var data = {};
+            _.each(_.keys(node), function(key){
+                data[key] = wrap(node[key], wrappedNode, key);
+            });
+            return data;
+        }();
 
-    return wrappedNode;
+        return wrappedNode;
+    })(node);
 };
 
 module.exports = astronaut;

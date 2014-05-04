@@ -92,5 +92,17 @@ module.exports = {
         );
         test.done();
     },
+    testWrap: function(test) {
+        test.equals(
+            "1 + 2 + f(5)",
+            astronaut("1 + 2 + 5").walk(function(node) {
+                if (node.isLiteral() && node.value() === 5) {
+                    node.wrap("f(<%= expression %>)");
+                }
+                return node;
+            }).deparse()
+        );
+        test.done();
+    }
 
 };

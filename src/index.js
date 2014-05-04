@@ -161,7 +161,26 @@ ExpressionTrait = _.extend({}, {
         } else {
             return node.body()[0].expression(); 
         }
-    }    
+    },
+    /**
+     * Wrap the current expression in the expression specified by an underscore template.
+     * The current expression should be represented as "expression" in the template. For
+     * example:
+     * node.wrap("f(<%= expression>)")
+     *
+     * @param codeOrTemplate
+     * An underscore template, in string or compiled form.
+     ***/
+    wrap: function(codeOrTemplate) {
+        var template = _.isObject(codeOrTemplate) ? codeOrTemplate : _.template(codeOrTemplate),
+            expression = this.deparse();
+       
+        this.replace(template(
+            {
+                expression: expression
+            }
+        ));
+    }
 });
 
 StatementTrait = _.extend({}, {

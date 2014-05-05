@@ -122,5 +122,32 @@ module.exports = {
             }).deparse()
         );
         test.done();
+    },
+    testComplexExampleWithChildConditions: function(test) {
+        var options = {
+            format: {
+                compact: true,
+            }
+        };
+
+        var code = "f(); f(1, [1,2,3]);";
+        test.equals(
+            "f();g([1,2,3]);f(1,[1,2,3]);",
+            astronaut(code).walk(function(node) {
+                if (node.isCallExpression() 
+                        && node.calleeName() === "f"
+                        && node.arguments().length > 1
+                        && node.arguments()[1].isArrayExpression()) {
+                    var options = {
+                        format: {
+                            compact: true,
+                        }
+                    };
+                    node.prefix("g(" + node.arguments()[1].deparse(options) + ')');
+                }
+                return node;
+            }).deparse(options)
+        );
+        test.done();
     }
 };

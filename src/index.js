@@ -158,8 +158,13 @@ var AstNode = _.chain(types)
         /**
          * Turn the AST back into codez
          ***/
-        deparse: function() {
-            return generateCode(this.ast());
+        deparse: function(options) {
+            options = options || {
+                format: {
+                    semicolons: false
+                }
+            };
+            return escodegen.generate(this.ast(), options);
         },
         /**
          * Replace this node.
@@ -180,6 +185,12 @@ var AstNode = _.chain(types)
 
 /**** Traits for functionality that is common across node types **/ 
 ExpressionTrait = _.extend({}, {
+    isStatement: function() {
+        return false;
+    },
+    isExpression: function() {
+        return true;
+    },
     parseAndExtractCorrespondingNode: function(code) {
         var node = astronaut(esprima.parse(code));
         if (node.body().length > 1) {
@@ -208,10 +219,53 @@ ExpressionTrait = _.extend({}, {
                 expression: expression
             }
         ));
+    },
+    /**
+     * Insert a statement before or after the current node.
+     * Since this node is an expression, crawl up the tree until you arrive at the parent statement.
+     *
+     * @param String code
+     * The code to be parsed and inserted as a new node in the AST.
+     *
+     * @param bool append
+     * A flag indicating whether to insert the new code after or before the current node 
+     ***/
+    affix: function(code, prefix) {
+        if (this.parent) {
+            this.parent.affix(code, prefix);
+        } else {
+            throw "Reached root while trying to affix expression";
+        }
+    },
+    /**
+     * Insert a statement before the current node.
+     * Since this node is an expression, crawl up the tree until you arrive at the parent statement.
+     *
+     * @param String code
+     * The code to be parsed and inserted as a new node in the AST.
+     **/
+    prefix: function(code) {
+        this.affix(code, true);
+    },
+    /**
+     * Insert a statement after the current node.
+     * Since this node is an expression, crawl up the tree until you arrive at the parent statement.
+     *
+     * @param String code
+     * The code to be parsed and inserted as a new node in the AST.
+     **/
+    suffix: function(code) {
+        this.affix(code, false);
     }
 });
 
 StatementTrait = _.extend({}, {
+    isStatement: function() {
+        return true;
+    },
+    isExpression: function() {
+        return false;
+    },
     parseAndExtractCorrespondingNode: function(code) {
         var node = astronaut(esprima.parse(code));
         if (node.body().length > 1) {
@@ -234,6 +288,7 @@ StatementTrait = _.extend({}, {
     affix: function(code, prefix) {
         if (this.parentArrayIndex === false) {
             throw "Cannot prepend an AST node that isn't part of a block";
+        } else {
         }
         var newNode = this.parseAndExtractCorrespondingNode(code),
             index = (prefix) ? this.parentArrayIndex : this.parentArrayIndex + 1;
@@ -292,14 +347,6 @@ var nodeTypePrototypes = _.chain(syntaxMap)
         return _.extend(acc, nodes);
     }, {})
     .value();
-
-var generateCode = function(code) {
-    return escodegen.generate(code, {
-        format: {
-            semicolons: false
-        }
-    });
-};
 
 //Now add nodetype-specific functionality. Typically these are shortcuts. 
 nodeTypePrototypes.Program = _.extend(nodeTypePrototypes.Program, {

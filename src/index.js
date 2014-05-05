@@ -317,9 +317,39 @@ StatementTrait = _.extend({}, {
      }
 });
 
+BlockContainerTrait = _.extend({}, {
+    parseAndExtractCorrespondingNode: function(code) {
+        var node = astronaut(esprima.parse(code));
+        return node.body()[0].data.body;
+    },
+    /**
+     * Wrap the current block with the code specified by an underscore template.
+     * The current body should be represented as "body" in the template. For
+     * example:
+     * node.wrap("try { <%= body %> } catch (e) { }")
+     *
+     * @param codeOrTemplate
+     * An underscore template, in string or compiled form.
+     ***/
+    wrapBody: function(codeOrTemplate) {
+        var bodyTemplate = _.isObject(codeOrTemplate) ? codeOrTemplate : _.template(codeOrTemplate),
+            // we wrap everything in a function that is thrown away before replacement
+            // this is because "{ return a }" in isolation is invalid and borks esprima
+            containerTemplate = _.template("function container() { <%= body %> }"),
+            body = this.deparse();
+
+        this.replace(containerTemplate({
+            body: bodyTemplate({
+                body: body.substring(1, body.length-1)
+            })
+        }));
+    }
+});
+
 var traits = {
     "Statement": StatementTrait,
-    "Expression": ExpressionTrait
+    "Expression": ExpressionTrait,
+    "BlockContainer": BlockContainerTrait
 };
 
 //A map from node types to their prototypes.

@@ -62,6 +62,12 @@ Returns a boolean indicating whether or note the node is of the specified type.
 Returns the SpiderMonkey AST for this node.
 ### AstNode.walk(callback)
 Walk the AST starting at this node, calling the callback along the way.
+### AstNode.map(callback)
+Walk the tree, replacing nodes with new nodes produced by callback(node). 
+To avoid thrashing the tree, if the callback returns null/undefined, no replacement occurs. 
+### AstNode.reduce(accumulator, callback)
+Reduce the tree down to a single value. 
+`callback` should be a function that expects the accumulator as the first argument, the current node as the second, and returns the new accumulator.
 ### AstNode.deparse()
 A shortcut for escodegen.generate(AstNode.ast()) 
 ### AstNode.wrap(codeOrTemplate)

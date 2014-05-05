@@ -30,6 +30,13 @@ module.exports = {
         test.equals(5,calls);
         test.done();
     },
+    testReduce: function(test) {
+        var calls = astronaut(onePlusOne).reduce(0, function(acc, node) {
+            return acc + 1;
+        });
+        test.equals(5,calls);
+        test.done();
+    },
     testUpdatingLiteralValues: function(test) {
         test.equals(
             "2 + 2",
@@ -52,6 +59,18 @@ module.exports = {
                     node.replace("2");
                 }
                 return node;
+            }).deparse()
+        );
+        test.done();
+    },
+    testMap: function(test) {
+        test.equals(
+            "2 + 2",
+            astronaut(onePlusOne).map(function(node) {
+                if (node.isLiteral()
+                        && node.value() === 1) {
+                    return "2"; 
+                }
             }).deparse()
         );
         test.done();
@@ -104,5 +123,4 @@ module.exports = {
         );
         test.done();
     }
-
 };

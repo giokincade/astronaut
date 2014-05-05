@@ -128,6 +128,34 @@ var AstNode = _.chain(types)
             return this;
         },
         /**
+         * Walk the tree, replacing nodes with new nodes produced by callback(node). 
+         * To avoid thrashing the tree, if the callback returns null/undefined, no replacement occurs. 
+         ***/
+        map: function(callback) {
+            this.walk(function(node) {
+                var result = callback(node);
+                if (result) {
+                    node.replace(result);
+                }
+            });
+            return this;
+        },
+        /**
+         * Reduce the tree down to a single value. 
+         *
+         * @param accumulator
+         *
+         * @callback
+         * A function that expects the accumulator as the first argument, the current node as the second, 
+         * and returns the new accumulator.
+         ***/
+        reduce: function(accumulator, callback) {
+            this.walk(function(node) {
+                accumulator = callback(accumulator, node);
+            });
+            return accumulator;
+        },
+        /**
          * Turn the AST back into codez
          ***/
         deparse: function() {

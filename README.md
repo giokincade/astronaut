@@ -38,6 +38,8 @@ astronaut('1 + 5')
     .deparse()
 //'1 + f(5)'
 ```
+Let's prepend all calls to f where the second argument is an array expression with a call to g:
+
 # Api
 ## astronaut
 ```
@@ -68,8 +70,8 @@ To avoid thrashing the tree, if the callback returns null/undefined, no replacem
 ### AstNode.reduce(accumulator, callback)
 Reduce the tree down to a single value. 
 `callback` should be a function that expects the accumulator as the first argument, the current node as the second, and returns the new accumulator.
-### AstNode.deparse()
-A shortcut for escodegen.generate(AstNode.ast()) 
+### AstNode.deparse(options)
+A shortcut for escodegen.generate(AstNode.ast(), options) 
 ### AstNode.wrap(codeOrTemplate)
 Wrap the current expression in the expression specified by an underscore template.
 The current expression should be represented as "expression" in the template. For

@@ -156,7 +156,10 @@ var AstNode = _.chain(types)
             return accumulator;
         },
         /**
-         * Turn the AST back into codez
+         * Turn the AST back into codez using escodegen. 
+         *
+         * @param options
+         * The options to pass along to escodegen.
          ***/
         deparse: function(options) {
             options = options || {

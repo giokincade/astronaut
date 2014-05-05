@@ -32,7 +32,7 @@ astronaut('1 + 5')
     .walk(function(node) { 
         if (node.isLiteral() 
                 && node.value() === 5) { 
-            node.wrap('<%= expression %>');
+            node.wrap('f(<%= expression %>)');
         }
     })
     .deparse()

@@ -51,7 +51,16 @@ astronaut(code).walk(function(node) {
 }).deparse()
 //"f();g([1,2,3]);f(1,[1,2,3]);",
 ```
-
+Let's wrap a function body in a try/catch:
+```
+var code = "function f(a) { return a; }";
+astronaut(code).walk(function(node) {
+    if (node.isBlockStatement() && node.parent.isFunctionDeclaration()) {
+        node.wrapBody("try { <%= body %> } catch(e) {} }");
+    }
+}).deparse()
+//"function f(a) { try { return a; } catch(e) {} }";
+```
 
 # Api
 ## astronaut
@@ -92,6 +101,13 @@ example:
 node.wrap("f(<%= expression=>)")
 
 This method is only available for expression nodes.
+### AstNode.wrapBody(codeOrTemplate)
+Wrap the current block statement with the code specified by an underscore template.
+The current block statement body should be represented as "body" in the template.
+For example:
+node.wrapBody("try { <%= body %> } catch(e) {}")
+
+This method is only avialable for block container nodes
 ### AstNode.prefix(code)
 Insert the statement specified in code prior to the statement encoded by the current node. 
 ### AstNode.suffix(code)

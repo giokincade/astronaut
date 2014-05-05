@@ -319,14 +319,8 @@ nodeTypePrototypes.CallExpression = _.extend(nodeTypePrototypes.CallExpression, 
 });  
 
 nodeTypePrototypes.Identifier = _.extend(nodeTypePrototypes.Identifier, {
-    isIdentifier: function() {
-        return true;
-    },
-    /**
-     * @return name
-     ***/
     name: function() {
-        return this.raw_node.name;
+        return this.data.name;
     }
 });  
 
@@ -366,9 +360,6 @@ var astronaut = function(codeOrNode) {
                 }, 
                 parentArrayIndex: {
                     value: arrayIndex
-                },
-                cache: {
-                    value: {}
                 }
             } 
         );

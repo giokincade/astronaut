@@ -140,7 +140,6 @@ module.exports = {
                         && node.arguments()[1].isArrayExpression()) {
                     node.prefix("g(" + node.arguments()[1].deparse(options) + ')');
                 }
-                return node;
             }).deparse(options)
         );
         test.done();

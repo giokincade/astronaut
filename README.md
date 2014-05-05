@@ -48,7 +48,6 @@ astronaut(code).walk(function(node) {
             && node.arguments()[1].isArrayExpression()) {
         node.prefix("g(" + node.arguments()[1].deparse() + ')');
     }
-    return node;
 }).deparse()
 //"f();g([1,2,3]);f(1,[1,2,3]);",
 ```

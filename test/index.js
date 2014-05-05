@@ -138,11 +138,6 @@ module.exports = {
                         && node.calleeName() === "f"
                         && node.arguments().length > 1
                         && node.arguments()[1].isArrayExpression()) {
-                    var options = {
-                        format: {
-                            compact: true,
-                        }
-                    };
                     node.prefix("g(" + node.arguments()[1].deparse(options) + ')');
                 }
                 return node;

@@ -38,7 +38,21 @@ astronaut('1 + 5')
     .deparse()
 //'1 + f(5)'
 ```
-Let's prepend all calls to f where the second argument is an array expression with a call to g:
+Let's prefix all calls to f where the second argument is an array expression with a call to g and the same array:
+```
+var code = "f(); f(1, [1,2,3]);";
+astronaut(code).walk(function(node) {
+    if (node.isCallExpression() 
+            && node.calleeName() === "f"
+            && node.arguments().length > 1
+            && node.arguments()[1].isArrayExpression()) {
+        node.prefix("g(" + node.arguments()[1].deparse() + ')');
+    }
+    return node;
+}).deparse()
+//"f();g([1,2,3]);f(1,[1,2,3]);",
+```
+
 
 # Api
 ## astronaut

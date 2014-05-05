@@ -56,19 +56,19 @@ A pointer to the parent of this node
 The key in the parent that points to this node.
 ### AstNode.parentArrayIndex
 If parent[key] is an array, the index of this node in that array. This enables affix functions. 
-### AstNode.is<NodeType>()
+### AstNode.is &lt;NodeType&gt;()
 Returns a boolean indicating whether or note the node is of the specified type. 
-### AstNode.unwrap()
+### AstNode.ast()
 Returns the SpiderMonkey AST for this node.
 ### AstNode.walk(callback)
 Walk the AST starting at this node, calling the callback along the way.
 ### AstNode.deparse()
-A shortcut for escodegen.generate(AstNode.unwrap()) 
+A shortcut for escodegen.generate(AstNode.ast()) 
 ### AstNode.wrap(codeOrTemplate)
 Wrap the current expression in the expression specified by an underscore template.
 The current expression should be represented as "expression" in the template. For
 example:
-node.wrap("f(<%= expression>)")
+node.wrap("f(<%= expression=>)")
 
 This method is only available for expression nodes.
 ### AstNode.prefix(code)

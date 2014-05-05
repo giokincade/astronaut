@@ -94,16 +94,16 @@ var AstNode = _.chain(types)
          * @return Object
          * The SpiderMonkey AST for this ASTNode
          **/
-        unwrap: function() {
-            return (function _unwrap(node) {
+        ast: function() {
+            return (function _ast(node) {
                 if (_.isArray(node)) {
-                    return _.map(node, _unwrap);
+                    return _.map(node, _ast);
                 } else if (!_.isObject(node)) {
                     return node;
                 } else {
                     var newdata = {};
                     _.each(_.keys(node.data), function(key) {
-                        newdata[key] = _unwrap(node.data[key]);
+                        newdata[key] = _ast(node.data[key]);
                     })
                     return newdata;
                 }
@@ -131,7 +131,7 @@ var AstNode = _.chain(types)
          * Turn the AST back into codez
          ***/
         deparse: function() {
-            return generateCode(this.unwrap());
+            return generateCode(this.ast());
         },
         /**
          * Replace this node.
@@ -201,7 +201,7 @@ StatementTrait = _.extend({}, {
      * The code to be parsed and inserted as a new node in the AST.
      *
      * @param bool append
-     * A flag indicating whether to insert the new new after or before the current node 
+     * A flag indicating whether to insert the new code after or before the current node 
      ***/
     affix: function(code, prefix) {
         if (this.parentArrayIndex === false) {

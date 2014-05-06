@@ -98,7 +98,7 @@ var AstNode = _.chain(types)
             return (function _ast(node) {
                 if (_.isArray(node)) {
                     return _.map(node, _ast);
-                } else if (!_.isObject(node)) {
+                } else if (!_.isObject(node) || (node instanceof RegExp)) {
                     return node;
                 } else {
                     var newdata = {};
@@ -419,7 +419,7 @@ var astronaut = function(codeOrNode) {
             return _.map(node, function(x, index) {
                 return wrap(x, parent, parentKey, index);
             }); 
-        } else if (!_.isObject(node)) {
+        } else if (!_.isObject(node) || (node instanceof RegExp)) {
             return node;
         }
 

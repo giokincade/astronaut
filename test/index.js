@@ -143,5 +143,14 @@ module.exports = {
             }).deparse(options)
         );
         test.done();
+    },
+    testRegex: function(test) {
+        var code = '/(.[^.]+)$/g';
+        var astro = astronaut(code);
+        test.equals(
+            code,
+            astro.deparse()
+        )
+        test.done();
     }
 };

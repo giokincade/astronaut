@@ -118,7 +118,7 @@ var AstNode = _.chain(types)
                     _.each(node, function(n) {
                         _walk(n, callback);
                     });
-                } else if (_.isObject(node)) {
+                } else if (_.isObject(node) && !(node instanceof RegExp)) {
                     callback(node);
                     _.each(_.values(node.data), function(datum) {
                         _walk(datum, callback);

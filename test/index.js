@@ -153,6 +153,25 @@ module.exports = {
         )
         test.done();
     },
+    testReplaceFunctionBody: function(test) {
+        var code = "function f(a) { return a; }";
+        var options = {
+            format: {
+                compact: true,
+            }
+        };
+
+
+        test.equals(
+            'function f(a){return\'foo\';}',
+            astronaut(code).walk(function(node) {
+                if (node.isBlockStatement()) {
+                    node.wrap('return "foo";');
+                }
+            }).deparse(options)
+        )
+        test.done();
+    },
     testWrapFunctionBody: function(test) {
         var code = "function f(a) { return a; }";
         var options = {

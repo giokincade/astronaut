@@ -205,10 +205,10 @@ ExpressionTrait = _.extend({}, {
         }
     },
     /**
-     * Wrap the current expression in the expression specified by an underscore template.
-     * The current expression should be represented as "expression" in the template. For
+     * Wrap the current node in the node specified by an underscore template.
+     * The current node should be represented as "node" in the template. For
      * example:
-     * node.wrap("f(<%= expression>)")
+     * node.wrap("f(<%= node %>)")
      *
      * @param codeOrTemplate
      * An underscore template, in string or compiled form.
@@ -219,7 +219,7 @@ ExpressionTrait = _.extend({}, {
        
         this.replace(template(
             {
-                expression: expression
+                node: expression
             }
         ));
     },
@@ -317,31 +317,42 @@ StatementTrait = _.extend({}, {
      }
 });
 
+var functionWrapperTemplate = _.template("function container() { <%= code %> }");
+
 BlockContainerTrait = _.extend({}, {
     parseAndExtractCorrespondingNode: function(code) {
-        var node = astronaut(esprima.parse(code));
-        return node.body()[0].data.body;
+        /**
+         * Extracting blocks is tricky beacuse most blocks are not valid JS in isolation. 
+         * For example, '{ return a}' won't parse.
+         * To get around that, we figure out what type of parent this block has, 
+         * then we wrap the incoming code in that type of node. So the aforementioned example turns into:
+         * function() { { return a} }
+         **/
+        if (this.parent && (this.parent.isFunctionDeclaration() || this.parent.isFunctionExpression())) {
+            var node = astronaut(esprima.parse(functionWrapperTemplate({
+                code: code 
+            })));
+
+            return node.body()[0].data.body;
+        } else {
+            throw "Cannot extract corresponding node for block container. Unhandled parent.";
+        }
     },
     /**
-     * Wrap the current block with the code specified by an underscore template.
-     * The current body should be represented as "body" in the template. For
+     * Wrap the current node in the node specified by an underscore template.
+     * The current node should be represented as "node" in the template. For
      * example:
-     * node.wrap("try { <%= body %> } catch (e) { }")
+     * node.wrap("f(<%= node>)")
      *
      * @param codeOrTemplate
      * An underscore template, in string or compiled form.
      ***/
-    wrapBody: function(codeOrTemplate) {
+    wrap: function(codeOrTemplate) {
         var bodyTemplate = _.isObject(codeOrTemplate) ? codeOrTemplate : _.template(codeOrTemplate),
-            // we wrap everything in a function that is thrown away before replacement
-            // this is because "{ return a }" in isolation is invalid and borks esprima
-            containerTemplate = _.template("function container() { <%= body %> }"),
             body = this.deparse();
 
-        this.replace(containerTemplate({
-            body: bodyTemplate({
-                body: body.substring(1, body.length-1)
-            })
+        this.replace(bodyTemplate({
+            node: body.substring(1, body.length-1) 
         }));
     }
 });

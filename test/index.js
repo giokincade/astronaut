@@ -116,7 +116,7 @@ module.exports = {
             "1 + 2 + f(5)",
             astronaut("1 + 2 + 5").walk(function(node) {
                 if (node.isLiteral() && node.value() === 5) {
-                    node.wrap("f(<%= expression %>)");
+                    node.wrap("f(<%= node %>)");
                 }
                 return node;
             }).deparse()
@@ -166,10 +166,30 @@ module.exports = {
             "function f(a){try{return a;}catch(e){}}",
             astronaut(code).walk(function(node) {
                 if (node.isBlockStatement() && node.parent.isFunctionDeclaration()) {
-                    node.wrapBody("try { <%= body %> } catch(e) {}");
+                    node.wrap("try { <%= node %> } catch(e) {}");
+                }
+            }).deparse(options)
+        )
+        test.done();
+    },
+    testWrapFunctionExpressionBody: function(test) {
+        var code = "var x = function(a) { return a; }";
+        var options = {
+            format: {
+                compact: true,
+            }
+        };
+
+
+        test.equals(
+            "var x=function(a){try{return a;}catch(e){}};",
+            astronaut(code).walk(function(node) {
+                if (node.isBlockStatement()) {
+                    node.wrap("try { <%= node %> } catch(e) {}");
                 }
             }).deparse(options)
         )
         test.done();
     }
+
 };

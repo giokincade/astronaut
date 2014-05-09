@@ -326,14 +326,29 @@ BlockContainerTrait = _.extend({}, {
          * For example, '{ return a}' won't parse.
          * To get around that, we figure out what type of parent this block has, 
          * then we wrap the incoming code in that type of node. So the aforementioned example turns into:
-         * function() { { return a} }
+         * function() { return a }
          **/
         if (this.parent && (this.parent.isFunctionDeclaration() || this.parent.isFunctionExpression())) {
+            
             var node = astronaut(esprima.parse(functionWrapperTemplate({
                 code: code 
             })));
+           
+            //This is the function body block.
+            outerBlock = node.body()[0].data.body;
 
-            return node.body()[0].data.body;
+            /**
+             * If the user submitted a block delimitted by {}, we will end up with a block inside a block. Let's 
+             * unwrap that for them.
+             ***/
+            if (outerBlock.isBlockStatement() 
+                && outerBlock.data.body
+                && outerBlock.data.body.length == 1
+                && outerBlock.data.body[0].isBlockStatement()) {
+                return outerBlock.data.body[0] 
+            } else {
+                return outerBlock;
+            }
         } else {
             throw "Cannot extract corresponding node for block container. Unhandled parent.";
         }

@@ -32,7 +32,7 @@ astronaut('1 + 5')
     .walk(function(node) { 
         if (node.isLiteral() 
                 && node.value() === 5) { 
-            node.wrap('f(<%= expression %>)');
+            node.wrap('f(<%= node %>)');
         }
     })
     .deparse()
@@ -56,7 +56,7 @@ Let's wrap a function body in a try/catch:
 var code = "function f(a) { return a; }";
 astronaut(code).walk(function(node) {
     if (node.isBlockStatement() && node.parent.isFunctionDeclaration()) {
-        node.wrapBody("try { <%= body %> } catch(e) {} }");
+        node.wrap("try { <%= node %> } catch(e) {} }");
     }
 }).deparse()
 //"function f(a) { try { return a; } catch(e) {} }";
@@ -95,19 +95,12 @@ Reduce the tree down to a single value.
 ### AstNode.deparse(options)
 A shortcut for escodegen.generate(AstNode.ast(), options) 
 ### AstNode.wrap(codeOrTemplate)
-Wrap the current expression in the expression specified by an underscore template.
-The current expression should be represented as "expression" in the template. For
+Wrap the current node in the code specified by an underscore template. The template can be a string to be parsed or a compiled template. The current node should be represented as `node` in the template. For
 example:
-node.wrap("f(<%= expression=>)")
+node.wrap("f(<%= node =>)")
 
-This method is only available for expression nodes.
-### AstNode.wrapBody(codeOrTemplate)
-Wrap the current block statement with the code specified by an underscore template.
-The current block statement body should be represented as "body" in the template.
-For example:
-node.wrapBody("try { <%= body %> } catch(e) {}")
-
-This method is only avialable for block container nodes
+### AstNode.replace(code)
+Replace the current node with the results of parsing the input `code` 
 ### AstNode.prefix(code)
 Insert the statement specified in code prior to the statement encoded by the current node. 
 ### AstNode.suffix(code)

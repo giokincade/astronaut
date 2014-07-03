@@ -115,8 +115,9 @@ module.exports = {
         test.equals(
             "1 + 2 + f(5)",
             astronaut("1 + 2 + 5").walk(function(node) {
-                if (node.isLiteral() && node.value() === 5) {
-                    node.wrap("f(<%= node %>)");
+                if (node.isLiteral() && node.value() === 5
+                 && !(node.parent.isCallExpression && node.parent.isCallExpression())) {
+                    node.wrap("f(<%= expression %>)");
                 }
                 return node;
             }).deparse()

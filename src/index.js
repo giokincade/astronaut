@@ -120,6 +120,15 @@ var AstNode = _.chain(types)
                     });
                 } else if (_.isObject(node) && !(node instanceof RegExp)) {
                     callback(node);
+                    // update the node reference in case the tree has been
+                    // changed by a call to wrap or replace in the callback
+                    if (node.parent) {
+                        if (node.parentArrayIndex === false) {
+                            node = node.parent.data[node.parentKey];
+                        } else {
+                            node = node.parent.data[node.parentKey][node.parentArrayIndex];
+                        }
+                    }
                     _.each(_.values(node.data), function(datum) {
                         _walk(datum, callback);
                     });

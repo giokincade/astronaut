@@ -296,10 +296,15 @@ StatementTrait = _.extend({}, {
         var newNode = this.parseAndExtractCorrespondingNode(code),
             index = (prefix) ? this.parentArrayIndex : this.parentArrayIndex + 1;
 
+		newNode.parentArrayIndex = index;
+
         this.parent.data[this.parentKey] = this.parent.data[this.parentKey]
             .slice(0, index)
             .concat([newNode])
-            .concat(this.parent.data[this.parentKey].slice(index)); 
+            .concat(this.parent.data[this.parentKey].slice(index).map(function(node) {
+                ++node.parentArrayIndex;
+                return node;
+            }));
     },
     /**
      * Parse the code, and prepend this node with the result. 
@@ -493,7 +498,8 @@ var astronaut = function(codeOrNode) {
                     value: parentKey,
                 }, 
                 parentArrayIndex: {
-                    value: arrayIndex
+                    value: arrayIndex,
+                    writable: true
                 }
             } 
         );

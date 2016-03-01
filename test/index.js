@@ -228,6 +228,16 @@ module.exports = {
             }).deparse(options)
         )
         test.done();
-    }
+    },
+    testParentArrayIndexCorrectness: function(test) {
+        var code = "var a = 1;\nvar b = 2;\nvar c = 3;";
+        var ast = astronaut(code);
 
+        ast.body()[1].prefix("var d = 4;");
+
+        for (var i = 0; i < ast.body().length; ++i) {
+            test.equals(i, ast.body()[i].parentArrayIndex)
+        }
+        test.done();
+    }
 };

@@ -296,7 +296,7 @@ StatementTrait = _.extend({}, {
         var newNode = this.parseAndExtractCorrespondingNode(code),
             index = (prefix) ? this.parentArrayIndex : this.parentArrayIndex + 1;
 
-		newNode.parentArrayIndex = index;
+        newNode.parentArrayIndex = index;
 
         this.parent.data[this.parentKey] = this.parent.data[this.parentKey]
             .slice(0, index)

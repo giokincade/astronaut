@@ -295,7 +295,9 @@ StatementTrait = _.extend({}, {
         }
         var newNode = this.parseAndExtractCorrespondingNode(code),
             index = (prefix) ? this.parentArrayIndex : this.parentArrayIndex + 1;
-
+        
+        newNode.parent = this.parent;
+        newNode.parentKey = this.parentKey;
         newNode.parentArrayIndex = index;
 
         this.parent.data[this.parentKey] = this.parent.data[this.parentKey]
@@ -493,9 +495,11 @@ var astronaut = function(codeOrNode) {
             {
                 parent: {
                     value: parent,
+                    writable: true
                 }, 
                 parentKey: {
                     value: parentKey,
+                    writable: true
                 }, 
                 parentArrayIndex: {
                     value: arrayIndex,

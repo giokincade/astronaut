@@ -177,6 +177,11 @@ var AstNode = _.chain(types)
          ***/
         replace: function(code) {
             var newNode = this.parseAndExtractCorrespondingNode(code); 
+
+            newNode.parent = this.parent;
+            newNode.parentKey = this.parentKey;
+            newNode.parentArrayIndex = this.parentArrayIndex;
+
             if (this.parentArrayIndex === false) {
                 this.parent.data[this.parentKey] = newNode;
             } else {

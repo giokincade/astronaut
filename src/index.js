@@ -177,6 +177,11 @@ var AstNode = _.chain(types)
          ***/
         replace: function(code) {
             var newNode = this.parseAndExtractCorrespondingNode(code); 
+
+            newNode.parent = this.parent;
+            newNode.parentKey = this.parentKey;
+            newNode.parentArrayIndex = this.parentArrayIndex;
+
             if (this.parentArrayIndex === false) {
                 this.parent.data[this.parentKey] = newNode;
             } else {
@@ -295,11 +300,18 @@ StatementTrait = _.extend({}, {
         }
         var newNode = this.parseAndExtractCorrespondingNode(code),
             index = (prefix) ? this.parentArrayIndex : this.parentArrayIndex + 1;
+        
+        newNode.parent = this.parent;
+        newNode.parentKey = this.parentKey;
+        newNode.parentArrayIndex = index;
 
         this.parent.data[this.parentKey] = this.parent.data[this.parentKey]
             .slice(0, index)
             .concat([newNode])
-            .concat(this.parent.data[this.parentKey].slice(index)); 
+            .concat(this.parent.data[this.parentKey].slice(index).map(function(node) {
+                ++node.parentArrayIndex;
+                return node;
+            }));
     },
     /**
      * Parse the code, and prepend this node with the result. 
@@ -488,12 +500,15 @@ var astronaut = function(codeOrNode) {
             {
                 parent: {
                     value: parent,
+                    writable: true
                 }, 
                 parentKey: {
                     value: parentKey,
+                    writable: true
                 }, 
                 parentArrayIndex: {
-                    value: arrayIndex
+                    value: arrayIndex,
+                    writable: true
                 }
             } 
         );
